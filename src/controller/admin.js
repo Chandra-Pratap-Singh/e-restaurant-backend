@@ -6,6 +6,7 @@ const {
   PRODUCTS_FETCHING_FAILED,
   PRODUCT_FETCHING_FAILED,
   PRODUCT_ADDITION_FAILED,
+  PRODUCT_DELETION_FAILED,
 } = require("../constants");
 const {
   getCategoryListFromDb,
@@ -16,6 +17,7 @@ const {
   getProductFromDb,
   updateProductInDb,
   addProductToDb,
+  deleteProductFromDb,
 } = require("../services/products");
 
 const { generateRandomUniqueId } = require("../util");
@@ -61,4 +63,11 @@ exports.addOrUpdateProduct = (req, res, next) => {
         .status(500)
         .json(!!product._id ? PRODUCT_UPDATION_FAILED : PRODUCT_ADDITION_FAILED)
     );
+};
+
+exports.deleteProduct = (req, res, next) => {
+  const productId = req.params.productId || "";
+  deleteProductFromDb(productId)
+    .then((product) => res.status(200).json(product))
+    .catch((err) => res.status(500).json(PRODUCT_DELETION_FAILED));
 };

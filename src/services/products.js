@@ -27,3 +27,7 @@ exports.updateProductInDb = (updatedProduct) => {
     ? Product.findByIdAndUpdate(_id, updatedProduct, { new: true })
     : Product.findOneAndUpdate({ productId }, updatedProduct, { new: true });
 };
+
+exports.deleteProductFromDb = (productId) => {
+  return Product.deleteOne({ productId });
+};
