@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const productRouter = require("./src/routes/products");
 const categoriesRouter = require("./src/routes/categories");
 const adminRouter = require("./src/routes/admin");
+const authRouter = require("./src/routes/auth");
+const { authorize } = require("./src/middlewares/auth");
 
 app.use(bodyParser.json());
 
@@ -17,13 +19,10 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use("/auth", authRouter);
 app.use("/products", productRouter);
 app.use("/categories", categoriesRouter);
 app.use("/admin", adminRouter);
-
-app.get("/", (req, res, next) => {
-  res.json({ working: true });
-});
 
 mongoose
   .connect(process.env.DB_CONNECTION_STRING, {

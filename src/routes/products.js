@@ -6,12 +6,13 @@ const {
   updateProduct,
   getUniqueProductCategoryList,
 } = require("../controller/products");
+const { authorize } = require("../middlewares/auth");
 const router = express.Router();
 
-router.post("/product", createProduct);
-router.get('/categories', getUniqueProductCategoryList)
-router.get("/:productId", getProduct);
-router.get("/", getAllProductList);
-router.patch("/product", updateProduct);
+router.post("/product", authorize, createProduct);
+router.get("/categories", authorize, getUniqueProductCategoryList);
+router.get("/:productId", authorize, getProduct);
+router.patch("/product", authorize, updateProduct);
+router.get("/", authorize, getAllProductList);
 
 module.exports = router;
