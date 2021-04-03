@@ -5,7 +5,7 @@ const { getUserFromDb } = require("../services/user");
 
 exports.authorize = async (req, res, next) => {
   try {
-    const token = req.get("authorization").split(" ")[1];
+    const token = req.get("Authorization").split(" ")[1];
     const decodedToken = jwt.verify(token, process.env.JWT_SECRATE);
     const { name, userId, email, phone } = await getUserFromDb(
       { userId: decodedToken.userId },
@@ -20,14 +20,14 @@ exports.authorize = async (req, res, next) => {
     req.userEmail = email;
     req.userPhone = phone;
     next();
-  } catch {
+  } catch (err) {
     res.status(500).json({ message: AUTHORIZATION_FAILED, unAuthorized: true });
   }
 };
 
 exports.authorizeAdmin = async (req, res, next) => {
   try {
-    const token = req.get("authorization").split(" ")[1];
+    const token = req.get("Authorization").split(" ")[1];
     const decodedToken = jwt.verify(token, process.env.JWT_SECRATE);
     const admins = await getAdminFromDb();
     const admin = admins.find((user) => user.userId === decodedToken.userId);

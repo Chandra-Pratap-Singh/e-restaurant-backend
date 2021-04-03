@@ -37,6 +37,9 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true,
       },
+      identifier: {
+        type: String,
+      },
       isPrimary: Boolean,
     },
   ],
@@ -53,13 +56,13 @@ const userSchema = mongoose.Schema({
       },
     },
   ],
-  orders: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
-      required: true,
-    },
-  ],
+  // orders: [
+  //   {
+  //     type: mongoose.Schema.Types.ObjectId,
+  //     ref: "Order",
+  //     required: true,
+  //   },
+  // ],
 });
 
 module.exports = mongoose.model("User", userSchema);

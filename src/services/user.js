@@ -5,14 +5,10 @@ exports.addUserToDb = (newUser) => {
   return user.save();
 };
 
-// exports.getProductListFromDb = (filters = {}, fields) => {
-//   return Product.find({ ...filters }, fields);
-// };
-
-exports.getUserFromDb = (filter = {}, fields) => {
+exports.getUserFromDb = (filter = {}, fields = "") => {
   return !!filter._id
-    ? User.findById(filter._id, fields)
-    : User.findOne({ ...filter }, fields);
+    ? User.findById(filter._id, fields).populate("cartItems.product")
+    : User.findOne({ ...filter }, fields).populate("cartItems.product");
 };
 
 exports.updateUserInDb = (updatedUser) => {

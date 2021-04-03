@@ -5,7 +5,7 @@ const productRouter = require("./src/routes/products");
 const categoriesRouter = require("./src/routes/categories");
 const adminRouter = require("./src/routes/admin");
 const authRouter = require("./src/routes/auth");
-const { authorize } = require("./src/middlewares/auth");
+const userRouter = require("./src/routes/user");
 
 app.use(bodyParser.json());
 
@@ -15,13 +15,14 @@ app.use((req, res, next) => {
     "Access-Control-Allow-Methods",
     "OPTIONS, GET, POST, PUT, PATCH, DELETE"
   );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   next();
 });
 
 app.use("/auth", authRouter);
 app.use("/products", productRouter);
 app.use("/categories", categoriesRouter);
+app.use("/user", userRouter);
 app.use("/admin", adminRouter);
 
 mongoose

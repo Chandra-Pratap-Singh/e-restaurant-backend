@@ -1,16 +1,29 @@
-const { addUserToDb } = require("../services/user");
+const {
+  addUserToDb,
+  getUserFromDb,
+  updateUserInDb,
+} = require("../services/user");
 const bcrypt = require("bcryptjs");
 const {
   SIGNUP_FAILED,
   EMAIL_DOES_NOT_EXISTS,
   WRONG_PASSWORD,
   LOGIN_FAILED,
-  ADMIN_EMAIL,
+  ITEM_NOT_REMOVED_FROM_CART,
+  ITEM_NOT_ADDED_TO_CART,
+  ORDER_STATES,
+  USER_NOT_FOUND,
+  CANNOT_UPDATE_USER,
+  CANNOT_GET_USER,
+  ORDER_FAILED,
+  USER_PROPERTIES,
 } = require("../constants");
 const { generateRandomUniqueId, generateJWT } = require("../util");
 const user = require("../db/models/user");
 const admin = require("../db/models/admin");
 const { getAdminFromDb } = require("../services/admin");
+const { getProductFromDb } = require("../services/products");
+const { addOrderToDb, getOrderListFromDb } = require("../services/orders");
 
 exports.signUp = async (req, res, next) => {
   const user = req.body.user;
@@ -34,9 +47,14 @@ exports.signUp = async (req, res, next) => {
         phone: user.phone,
         name: user.name,
       });
+      const {
+        password: uPassword,
+        cartItems: uCartItems,
+        orders: uOrders,
+        ...userResponse
+      } = user;
       res.status(200).json({
-        userId: user.userId,
-        name: user.name,
+        user: userResponse,
         token: token,
       });
     })
@@ -89,8 +107,13 @@ exports.userLogin = (req, res, next) => {
           name: user.name,
         });
         res.status(200).json({
-          userId: user.userId,
-          name: user.name,
+          user: {
+            userId: user.userId,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            addresses: user.addresses,
+          },
           token: token,
         });
       });
@@ -108,4 +131,148 @@ exports.login = async (req, res, next) => {
   }
 };
 
-exports.addItemToCart = (req, res, next) => {};
+exports.getUser = (req, res, next) => {
+  const userId = req.userId;
+  getUserFromDb({ userId }, USER_PROPERTIES.join(" "))
+    .then((user) => {
+      if (!user) res.status(500).json({ message: USER_NOT_FOUND });
+      res.status(200).json(user);
+    })
+    .catch(() => res.status(500).json({ message: CANNOT_GET_USER }));
+};
+
+exports.addItemToCart = async (req, res, next) => {
+  const userId = req.userId;
+  const productId = req.body.productId;
+  const product = await getProductFromDb({ productId });
+  const user = await getUserFromDb({ userId });
+  const cartItemIndex = user.cartItems.findIndex(
+    (cartItem) => cartItem.product && cartItem.product.productId === productId
+  );
+  if (cartItemIndex === -1) {
+    user.cartItems.push({ product, quantity: 1 });
+  } else {
+    user.cartItems = user.cartItems.map((cartItem) => {
+      if (cartItem.product && cartItem.product.productId === productId) {
+        cartItem.quantity++;
+      }
+      return cartItem;
+    });
+  }
+  updateUserInDb(user)
+    .then((user) => res.status(200).json(user))
+    .catch((err) => {
+      res.status(500).json({ message: ITEM_NOT_ADDED_TO_CART });
+    });
+};
+
+exports.removeItemFromCart = async (req, res, next) => {
+  const userId = req.userId;
+  const productId = req.body.productId;
+  const user = await getUserFromDb({ userId });
+  user.cartItems = user.cartItems.map((cartItem) => {
+    if (cartItem.product.productId === productId) {
+      cartItem.quantity--;
+    }
+    return cartItem;
+  });
+  user.cartItems = user.cartItems.filter((cartItem) => cartItem.quantity !== 0);
+  updateUserInDb(user)
+    .then((user) => res.status(200).json(user))
+    .catch((err) => {
+      res.status(500).json({ message: ITEM_NOT_REMOVED_FROM_CART });
+    });
+};
+
+exports.getCartItems = (req, res, next) => {
+  const userId = req.userId;
+  getUserFromDb({ userId }, "cartItems")
+    .then((user) => res.status(200).json(user.cartItems))
+    .catch(res.status(500));
+};
+
+exports.getOderList = (req, res, next) => {
+  const userId = req.userId;
+  getOrderListFromDb({ "customer.snapshot.userId": userId })
+    .then((orders) => res.status(200).json(orders))
+    .catch((err) => res.status(500).json({ message: CANNOT_GET_USER }));
+};
+
+const emptyCart = async (userId) => {
+  const user = await getUserFromDb({userId});
+  user.cartItems = [];
+  await updateUserInDb(user)
+}
+
+exports.checkout = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const address = req.body.address;
+    let user;
+    try {
+      user = await getUserFromDb({ userId });
+      if (!user) throw new Error(USER_NOT_FOUND);
+    } catch {
+      res.status(500).json({ message: USER_NOT_FOUND });
+    }
+
+    const products = user.cartItems.map((item) => {
+      return {
+        product: item.product,
+        quantity: item.quantity,
+        snapshot: {
+          name: item.product,
+          img: item.product.img,
+          price: item.product.price,
+          rating: item.product.rating,
+          ratingProvider: item.product.ratingProvider,
+          description: item.product.description,
+          category: item.product.category,
+          productId: item.product.productId,
+        },
+      };
+    });
+
+
+    const order = {
+      orderId: generateRandomUniqueId(),
+      customer: {
+        customer: user,
+        snapshot: {
+          userId: user.userId,
+          name: user.name,
+          phone: user.phone,
+          email: user.email,
+          address,
+        },
+      },
+      products,
+      status: ORDER_STATES.REQUESTED,
+      history: [
+        {
+          from: ORDER_STATES.CART,
+          to: ORDER_STATES.REQUESTED,
+          time: new Date(),
+          Comment: "System",
+        },
+      ],
+    };
+
+    let recordedOrder;
+    try {
+      recordedOrder = await addOrderToDb(order);
+    } catch {
+      res.status(500).json({ message: ORDER_FAILED });
+    }
+
+    try {
+      await emptyCart(userId)
+    } catch {
+      res.status(500).json({ message: CANNOT_UPDATE_USER });
+    }
+
+    res.status(200).json(recordedOrder);
+  } catch {
+    res.status(500).json({ message: ORDER_FAILED });
+  }
+};

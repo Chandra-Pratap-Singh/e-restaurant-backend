@@ -1,17 +1,21 @@
 const mongoose = require("mongoose");
 
 const OrderSchema = mongoose.Schema({
+  orderId: {
+    type: String,
+    required: true,
+  },
   customer: {
-    orderId: {
-      type: String,
-      required: true,
-    },
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
     snapshot: {
+      userId: {
+        type: String,
+        required: true,
+      },
       name: {
         type: String,
         required: true,
@@ -24,8 +28,21 @@ const OrderSchema = mongoose.Schema({
         type: String,
       },
       address: {
-        type: String,
-        required: true,
+        name: {
+          type: String,
+          required: true,
+        },
+        phone: {
+          type: String,
+          required: true,
+        },
+        email: {
+          type: String,
+        },
+        address: {
+          type: String,
+          required: true,
+        },
       },
     },
   },

@@ -6,7 +6,9 @@ exports.addOrderToDb = (newOrder) => {
 };
 
 exports.getOrderListFromDb = (filters = {}, fields) => {
-  return Order.find({ ...filters }, fields);
+  return Order.find({ ...filters }, fields).populate(
+    "customer.customer products.product"
+  );
 };
 
 exports.getOrderFromDb = (filter = {}, fields) => {
