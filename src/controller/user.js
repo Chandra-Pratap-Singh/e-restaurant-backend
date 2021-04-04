@@ -25,6 +25,7 @@ const admin = require("../db/models/admin");
 const { getAdminFromDb } = require("../services/admin");
 const { getProductFromDb } = require("../services/products");
 const { addOrderToDb, getOrderListFromDb } = require("../services/orders");
+// const io = require("../socket-io").getIo();
 
 exports.signUp = async (req, res, next) => {
   const user = req.body.user;
@@ -222,7 +223,7 @@ exports.checkout = async (req, res, next) => {
         product: item.product,
         quantity: item.quantity,
         snapshot: {
-          name: item.product,
+          name: item.product.name,
           img: item.product.img,
           price: item.product.price,
           rating: item.product.rating,
@@ -270,7 +271,9 @@ exports.checkout = async (req, res, next) => {
     } catch {
       res.status(500).json({ message: CANNOT_UPDATE_USER });
     }
-
+    require("../socket-io")
+      .getIo()
+      .emit("newOrderRequest", { order: recordedOrder });
     res.status(200).json(recordedOrder);
   } catch {
     res.status(500).json({ message: ORDER_FAILED });

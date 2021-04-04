@@ -42,6 +42,8 @@ exports.CANNOT_UPDATE_USER = "Cannot update user";
 exports.CANNOT_GET_USER = "Cannot get user";
 exports.ORDER_FAILED = "Order failed";
 exports.CANNOT_GET_ORDERS = "Cannot get orders";
+exports.CANNOT_UPDATE_ORDER_STATUS = "Cannot update order status";
+exports.CANNOT_FIND_ORDER = "Cannot find order";
 exports.ORDER_STATES = {
   CART: "Cart",
   REQUESTED: "Requested",

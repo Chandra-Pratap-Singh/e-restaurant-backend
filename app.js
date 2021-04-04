@@ -31,8 +31,10 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    app.listen(process.env.PORT || 3000, () =>
+    const server = app.listen(process.env.PORT || 3000, () =>
       console.log("App is listening up and running")
     );
+    const io = require("./src/socket-io").init(server);
+    io.on("connection", (socket) => console.log("Socket Client Connected"));
   })
   .catch((err) => console.log(err));

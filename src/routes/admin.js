@@ -8,6 +8,7 @@ const {
   getCompletedOrders,
   getRejectedOrders,
   getActiveOrders,
+  updateOrderStatus,
 } = require("../controller/admin");
 const { getAllProductList } = require("../controller/admin");
 const { authorizeAdmin } = require("../middlewares/auth");
@@ -22,5 +23,6 @@ router.delete("/product/:productId", authorizeAdmin, deleteProduct);
 router.get("/completed-order-list", authorizeAdmin, getCompletedOrders);
 router.get("/rejected-order-list", authorizeAdmin, getRejectedOrders);
 router.get("/active-order-list", authorizeAdmin, getActiveOrders);
+router.put("/update-order-status", authorizeAdmin, updateOrderStatus);
 
 module.exports = router;

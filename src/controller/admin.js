@@ -9,12 +9,18 @@ const {
   PRODUCT_DELETION_FAILED,
   ORDER_STATES,
   CANNOT_GET_ORDERS,
+  CANNOT_UPDATE_ORDER_STATUS,
+  CANNOT_FIND_ORDER,
 } = require("../constants");
 const {
   getCategoryListFromDb,
   addCategoryToDb,
 } = require("../services/categories");
-const { getOrderFromDb, getOrderListFromDb } = require("../services/orders");
+const {
+  getOrderFromDb,
+  getOrderListFromDb,
+  updateOrderInDb,
+} = require("../services/orders");
 const {
   getProductListFromDb,
   getProductFromDb,
@@ -99,4 +105,25 @@ exports.getActiveOrders = (req, res, next) => {
   getOrderListFromDb(filter)
     .then((orders) => res.status(200).json(orders))
     .catch((err) => res.status(500).json(CANNOT_GET_ORDERS));
+};
+
+exports.updateOrderStatus = async (req, res, next) => {
+  const orderId = req.body.orderId;
+  const newStatus = req.body.newStatus;
+  let order;
+  try {
+    order = await getOrderFromDb({ orderId });
+  } catch {
+    res.status(500).json({ message: CANNOT_FIND_ORDER });
+  }
+  order.history.push({
+    from: order.status,
+    to: newStatus,
+    time: new Date(),
+    comment: "",
+  });
+  order.status = newStatus;
+  updateOrderInDb(order)
+    .then((order) => res.status(200).json(order))
+    .catch((err) => res.status(500).json(CANNOT_UPDATE_ORDER_STATUS));
 };
