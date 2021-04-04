@@ -17,6 +17,7 @@ const {
   CANNOT_GET_USER,
   ORDER_FAILED,
   USER_PROPERTIES,
+  CANNOT_GET_ORDERS,
 } = require("../constants");
 const { generateRandomUniqueId, generateJWT } = require("../util");
 const user = require("../db/models/user");
@@ -195,14 +196,14 @@ exports.getOderList = (req, res, next) => {
   const userId = req.userId;
   getOrderListFromDb({ "customer.snapshot.userId": userId })
     .then((orders) => res.status(200).json(orders))
-    .catch((err) => res.status(500).json({ message: CANNOT_GET_USER }));
+    .catch((err) => res.status(500).json({ message: CANNOT_GET_ORDERS }));
 };
 
 const emptyCart = async (userId) => {
-  const user = await getUserFromDb({userId});
+  const user = await getUserFromDb({ userId });
   user.cartItems = [];
-  await updateUserInDb(user)
-}
+  await updateUserInDb(user);
+};
 
 exports.checkout = async (req, res, next) => {
   try {
@@ -232,7 +233,6 @@ exports.checkout = async (req, res, next) => {
         },
       };
     });
-
 
     const order = {
       orderId: generateRandomUniqueId(),
@@ -266,7 +266,7 @@ exports.checkout = async (req, res, next) => {
     }
 
     try {
-      await emptyCart(userId)
+      await emptyCart(userId);
     } catch {
       res.status(500).json({ message: CANNOT_UPDATE_USER });
     }

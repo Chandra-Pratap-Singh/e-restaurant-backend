@@ -18,7 +18,7 @@ const { generateRandomUniqueId } = require("../util");
 
 exports.getAllProductList = async (req, res, next) => {
   const category = req.query ? req.query.category : null;
-  const filter = {};
+  const filter = { available: true };
   if (!!category) {
     const { _id } = await getCategoryFromDb({ category });
     filter.category = _id;

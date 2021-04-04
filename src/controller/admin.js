@@ -7,11 +7,14 @@ const {
   PRODUCT_FETCHING_FAILED,
   PRODUCT_ADDITION_FAILED,
   PRODUCT_DELETION_FAILED,
+  ORDER_STATES,
+  CANNOT_GET_ORDERS,
 } = require("../constants");
 const {
   getCategoryListFromDb,
   addCategoryToDb,
 } = require("../services/categories");
+const { getOrderFromDb, getOrderListFromDb } = require("../services/orders");
 const {
   getProductListFromDb,
   getProductFromDb,
@@ -70,4 +73,30 @@ exports.deleteProduct = (req, res, next) => {
   deleteProductFromDb(productId)
     .then((product) => res.status(200).json(product))
     .catch((err) => res.status(500).json(PRODUCT_DELETION_FAILED));
+};
+
+exports.getCompletedOrders = (req, res, next) => {
+  const filters = { status: ORDER_STATES.DELIVERED };
+  getOrderListFromDb(filters)
+    .then((orders) => res.status(200).json(orders))
+    .catch((err) => res.status(500).json(CANNOT_GET_ORDERS));
+};
+
+exports.getRejectedOrders = (req, res, next) => {
+  const filters = { status: ORDER_STATES.REJECTED };
+  getOrderListFromDb(filters)
+    .then((orders) => res.status(200).json(orders))
+    .catch((err) => res.status(500).json(CANNOT_GET_ORDERS));
+};
+
+exports.getActiveOrders = (req, res, next) => {
+  const filter = {
+    $or: [
+      { status: { $ne: ORDER_STATES.DELIVERED } },
+      { status: { $ne: ORDER_STATES.DELIVERED } },
+    ],
+  };
+  getOrderListFromDb(filter)
+    .then((orders) => res.status(200).json(orders))
+    .catch((err) => res.status(500).json(CANNOT_GET_ORDERS));
 };

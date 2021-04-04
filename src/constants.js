@@ -7,6 +7,7 @@ exports.SHOP_PRODUCT_PROPERTY = [
   "description",
   "category",
   "productId",
+  "available",
 ];
 
 exports.ADMIN_PRODUCT_PROPERTY = [
@@ -16,6 +17,7 @@ exports.ADMIN_PRODUCT_PROPERTY = [
   "description",
   "category",
   "productId",
+  "available",
 ];
 
 exports.USER_PROPERTIES = ["userId", "name", "phone", "email", "addresses"];
@@ -39,12 +41,14 @@ exports.USER_NOT_FOUND = "User not found";
 exports.CANNOT_UPDATE_USER = "Cannot update user";
 exports.CANNOT_GET_USER = "Cannot get user";
 exports.ORDER_FAILED = "Order failed";
-exports.CANNOT_GET_ORDER = "Cannot get orders";
+exports.CANNOT_GET_ORDERS = "Cannot get orders";
 exports.ORDER_STATES = {
   CART: "Cart",
   REQUESTED: "Requested",
+  REJECTED: "Rejected",
   ACCEPTED: "Accepted",
   IN_KITCHEN: "In Kitchen",
   READY: "Ready",
   ON_WAY: "On Way",
+  DELIVERED: "Delivered",
 };

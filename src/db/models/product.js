@@ -34,6 +34,10 @@ const mongoose = require("mongoose"),
       required: true,
       default: generateRandomUniqueId(),
     },
+    available: {
+      type: Boolean,
+      required: true,
+    },
   });
 
 module.exports = mongoose.model("Product", productSchema);
