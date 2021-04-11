@@ -22,6 +22,10 @@ const userSchema = mongoose.Schema({
   },
   addresses: [
     {
+      addressId: {
+        type: String,
+        required: true,
+      },
       name: {
         type: String,
         required: true,

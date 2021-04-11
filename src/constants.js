@@ -44,6 +44,8 @@ exports.ORDER_FAILED = "Order failed";
 exports.CANNOT_GET_ORDERS = "Cannot get orders";
 exports.CANNOT_UPDATE_ORDER_STATUS = "Cannot update order status";
 exports.CANNOT_FIND_ORDER = "Cannot find order";
+exports.CANNOT_UPDATE_ADDRESS = "Cannot update address";
+exports.CANNOT_DELETE_ADDRESS = "Cannot delete address";
 exports.ORDER_STATES = {
   CART: "Cart",
   REQUESTED: "Requested",

@@ -18,6 +18,8 @@ const {
   ORDER_FAILED,
   USER_PROPERTIES,
   CANNOT_GET_ORDERS,
+  CANNOT_UPDATE_ADDRESS,
+  CANNOT_DELETE_ADDRESS,
 } = require("../constants");
 const { generateRandomUniqueId, generateJWT } = require("../util");
 const user = require("../db/models/user");
@@ -25,7 +27,6 @@ const admin = require("../db/models/admin");
 const { getAdminFromDb } = require("../services/admin");
 const { getProductFromDb } = require("../services/products");
 const { addOrderToDb, getOrderListFromDb } = require("../services/orders");
-// const io = require("../socket-io").getIo();
 
 exports.signUp = async (req, res, next) => {
   const user = req.body.user;
@@ -37,10 +38,24 @@ exports.signUp = async (req, res, next) => {
     password: hashedPwd,
     email,
     phone,
-    addresses: [{ name, email, phone, address }],
+    addresses: [
+      { name, email, phone, address, addressId: generateRandomUniqueId() },
+    ],
     cartItems: [],
     orders: [],
   };
+  try {
+    const testEmailUser = await getUserFromDb({ email });
+    if (testEmailUser)
+      return res.status(500).json({ message: "This Email already exists" });
+    const testPhoneUser = await getUserFromDb({ phone });
+    if (testPhoneUser)
+      return res
+        .status(500)
+        .json({ message: "This Phone number already exists" });
+  } catch {
+    res.status(500).json({ message: SIGNUP_FAILED });
+  }
   addUserToDb(newUser)
     .then((user) => {
       const token = generateJWT({
@@ -278,4 +293,63 @@ exports.checkout = async (req, res, next) => {
   } catch {
     res.status(500).json({ message: ORDER_FAILED });
   }
+};
+
+exports.addOrUpdateAddress = async (req, res, next) => {
+  const userId = req.userId;
+  const newAddress = req.body.address;
+  let user;
+  try {
+    user = await getUserFromDb({ userId });
+    if (!user) throw new Error("Cannot find user");
+  } catch {
+    res.status(500).json({ message: CANNOT_UPDATE_ADDRESS });
+  }
+  if (!!newAddress.addressId) {
+    user.addresses = user.addresses.map((item) => {
+      if (item.addressId === newAddress.addressId) {
+        return newAddress;
+      }
+      return item;
+    });
+  } else {
+    user.addresses.push({ ...newAddress, addressId: generateRandomUniqueId() });
+  }
+  updateUserInDb(user)
+    .then(() => res.status(200).json(user.addresses))
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ message: CANNOT_UPDATE_ADDRESS });
+    });
+};
+
+exports.deleteAddress = async (req, res, next) => {
+  const userId = req.userId;
+  const addressId = req.params.addressId;
+  let user;
+  console.log(addressId);
+  try {
+    user = await getUserFromDb({ userId });
+    if (!user) throw new Error("Cannot find user");
+  } catch {
+    res.status(500).json({ message: CANNOT_DELETE_ADDRESS });
+  }
+  if (!!addressId) {
+    user.addresses = user.addresses.filter(
+      (item) => item.addressId !== addressId
+    );
+  } else {
+    res.status(500).json({ message: CANNOT_DELETE_ADDRESS });
+  }
+  updateUserInDb(user)
+    .then((user) => res.status(200).json(user.addresses))
+    .catch(() => res.status(500).json({ message: CANNOT_DELETE_ADDRESS }));
+};
+
+exports.updateUserProfile = (req, res, next) => {
+  const userId = req.userId;
+  const updatedUserPatch = req.body.user;
+  updateUserInDb({ userId, ...updatedUserPatch })
+    .then((user) => res.status(200).json(user))
+    .catch(() => res.status(500).json({ message: CANNOT_UPDATE_USER }));
 };
