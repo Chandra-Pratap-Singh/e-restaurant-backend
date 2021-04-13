@@ -116,6 +116,7 @@ exports.updateOrderStatus = async (req, res, next) => {
   } catch {
     res.status(500).json({ message: CANNOT_FIND_ORDER });
   }
+  if (newStatus === ORDER_STATES.DELIVERED) order.deliveryDateTime = Date.now();
   order.history.push({
     from: order.status,
     to: newStatus,

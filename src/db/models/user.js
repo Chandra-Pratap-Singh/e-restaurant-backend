@@ -9,6 +9,8 @@ const userSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  resetPasswordToken: String,
+  resetPasswordExpirationDateTime: Date,
   name: {
     type: String,
     required: true,
@@ -60,13 +62,6 @@ const userSchema = mongoose.Schema({
       },
     },
   ],
-  // orders: [
-  //   {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: "Order",
-  //     required: true,
-  //   },
-  // ],
 });
 
 module.exports = mongoose.model("User", userSchema);

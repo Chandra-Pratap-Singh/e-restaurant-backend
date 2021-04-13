@@ -9,6 +9,9 @@ const {
   addOrUpdateAddress,
   deleteAddress,
   updateUserProfile,
+  updatePassword,
+  changePassword,
+  sendResetPasswordLink,
 } = require("../controller/user");
 const { authorize } = require("../middlewares/auth");
 
@@ -23,5 +26,7 @@ router.get("/orders", authorize, getOderList);
 router.put("/address", authorize, addOrUpdateAddress);
 router.delete("/address/:addressId", authorize, deleteAddress);
 router.patch("/user-profile", authorize, updateUserProfile);
-
+router.patch("/change-password", authorize, updatePassword);
+router.post("/request-password-reset", sendResetPasswordLink);
+router.patch("/forgot-password", changePassword);
 module.exports = router;

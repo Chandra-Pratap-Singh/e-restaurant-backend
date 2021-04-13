@@ -5,6 +5,8 @@ const OrderSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  orderedDateTime: { type: Date, required: true },
+  deliveryDateTime: Date,
   customer: {
     customer: {
       type: mongoose.Schema.Types.ObjectId,

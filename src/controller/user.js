@@ -4,6 +4,7 @@ const {
   updateUserInDb,
 } = require("../services/user");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const {
   SIGNUP_FAILED,
   EMAIL_DOES_NOT_EXISTS,
@@ -20,6 +21,9 @@ const {
   CANNOT_GET_ORDERS,
   CANNOT_UPDATE_ADDRESS,
   CANNOT_DELETE_ADDRESS,
+  SINGUP_MAIL_SUBJECT,
+  CANNOT_UPDATE_PASSWORD,
+  CANNOT_SEND_MAIL,
 } = require("../constants");
 const { generateRandomUniqueId, generateJWT } = require("../util");
 const user = require("../db/models/user");
@@ -27,6 +31,7 @@ const admin = require("../db/models/admin");
 const { getAdminFromDb } = require("../services/admin");
 const { getProductFromDb } = require("../services/products");
 const { addOrderToDb, getOrderListFromDb } = require("../services/orders");
+const { sendMail } = require("../mailer");
 
 exports.signUp = async (req, res, next) => {
   const user = req.body.user;
@@ -74,6 +79,11 @@ exports.signUp = async (req, res, next) => {
         user: userResponse,
         token: token,
       });
+      sendMail(
+        email,
+        SINGUP_MAIL_SUBJECT,
+        `Thank You ${name} for signingup at E-restaurant`
+      );
     })
     .catch(() => res.status(500).json({ message: SIGNUP_FAILED }));
 };
@@ -252,6 +262,7 @@ exports.checkout = async (req, res, next) => {
 
     const order = {
       orderId: generateRandomUniqueId(),
+      orderedDateTime: Date.now(),
       customer: {
         customer: user,
         snapshot: {
@@ -318,7 +329,6 @@ exports.addOrUpdateAddress = async (req, res, next) => {
   updateUserInDb(user)
     .then(() => res.status(200).json(user.addresses))
     .catch((err) => {
-      console.log(err);
       res.status(500).json({ message: CANNOT_UPDATE_ADDRESS });
     });
 };
@@ -327,7 +337,6 @@ exports.deleteAddress = async (req, res, next) => {
   const userId = req.userId;
   const addressId = req.params.addressId;
   let user;
-  console.log(addressId);
   try {
     user = await getUserFromDb({ userId });
     if (!user) throw new Error("Cannot find user");
@@ -352,4 +361,69 @@ exports.updateUserProfile = (req, res, next) => {
   updateUserInDb({ userId, ...updatedUserPatch })
     .then((user) => res.status(200).json(user))
     .catch(() => res.status(500).json({ message: CANNOT_UPDATE_USER }));
+};
+
+exports.updatePassword = async (req, res, next) => {
+  const userId = req.userId;
+  const oldPassword = req.body.oldPassword;
+  const newPassword = await bcrypt.hash(req.body.newPassword, 12);
+  const user = await getUserFromDb({ userId });
+  bcrypt
+    .compare(oldPassword, user.password)
+    .then((isEqual) => {
+      if (isEqual) {
+        user.password = newPassword;
+        return updateUserInDb(user);
+      } else throw new Error();
+    })
+    .then((user) => res.status(200).json(user))
+    .catch((err) => {
+      res.status(500).json({ message: CANNOT_UPDATE_PASSWORD });
+    });
+};
+
+exports.sendResetPasswordLink = async (req, res, next) => {
+  try {
+    const email = req.body.email;
+    const user = await getUserFromDb({ email });
+    crypto.randomBytes(32, (err, buffer) => {
+      if (err) throw new Error(err);
+      const token = buffer.toString("hex");
+      user.resetPasswordToken = token;
+      user.resetPasswordExpirationDateTime = Date.now() + 5 * 60 * 1000;
+      updateUserInDb(user)
+        .then(() => {
+          const resetPasswordLink = `${process.env.FRONT_END_BASE_LINK}/forgot-password/${token}`;
+          const mailMessage = `Click <a href="${resetPasswordLink}">here</a> to reset e-restaurant password`;
+          sendMail(user.email, "Reset Password", mailMessage);
+          res.status(200).json();
+        })
+        .catch((err) => {
+          throw new Error(err);
+        });
+    });
+  } catch (err) {
+    res.status(500).json({ message: CANNOT_SEND_MAIL });
+  }
+};
+
+exports.changePassword = async (req, res, next) => {
+  try {
+    const resetPasswordToken = req.body.token;
+    const password = req.body.password;
+    const user = await getUserFromDb({ resetPasswordToken });
+    if (!user || Date.now() > user.resetPasswordExpirationDateTime)
+      throw new Error();
+    const hashedPwd = await bcrypt.hash(password, 12);
+    user.password = hashedPwd;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpirationDateTime = null;
+    updateUserInDb(user)
+      .then(() => res.status(200).json())
+      .catch((err) => {
+        throw new Error(err);
+      });
+  } catch (err) {
+    res.status(500).json({ message: CANNOT_UPDATE_PASSWORD });
+  }
 };
