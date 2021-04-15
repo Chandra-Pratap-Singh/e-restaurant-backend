@@ -5,10 +5,16 @@ exports.addOrderToDb = (newOrder) => {
   return order.save();
 };
 
-exports.getOrderListFromDb = (filters = {}, fields) => {
-  return Order.find({ ...filters }, fields).populate(
-    "customer.customer products.product"
-  );
+exports.countOrdersInDb = (filters = {}) => {
+  return Order.find({ ...filters }).count();
+};
+
+exports.getOrderListFromDb = (filters = {}, fields, skip = 0, limit = null) => {
+  return Order.find({ ...filters }, fields)
+    .sort("-orderedDateTime")
+    .skip(skip)
+    .limit(limit)
+    .populate("customer.customer products.product");
 };
 
 exports.getOrderFromDb = (filter = {}, fields) => {

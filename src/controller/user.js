@@ -30,7 +30,11 @@ const user = require("../db/models/user");
 const admin = require("../db/models/admin");
 const { getAdminFromDb } = require("../services/admin");
 const { getProductFromDb } = require("../services/products");
-const { addOrderToDb, getOrderListFromDb } = require("../services/orders");
+const {
+  addOrderToDb,
+  getOrderListFromDb,
+  countOrdersInDb,
+} = require("../services/orders");
 const { sendMail } = require("../mailer");
 
 exports.signUp = async (req, res, next) => {
@@ -218,10 +222,16 @@ exports.getCartItems = (req, res, next) => {
     .catch(res.status(500));
 };
 
-exports.getOderList = (req, res, next) => {
+exports.getOderList = async (req, res, next) => {
   const userId = req.userId;
-  getOrderListFromDb({ "customer.snapshot.userId": userId })
-    .then((orders) => res.status(200).json(orders))
+  const pageNumber = req.query ? +req.query.pageNumber : null;
+  const limit = req.query ? +req.query.pageLimit : null;
+  const skip = !!pageNumber && !!limit ? (pageNumber - 1) * limit : null;
+  const totalCount = await countOrdersInDb({
+    "customer.snapshot.userId": userId,
+  });
+  getOrderListFromDb({ "customer.snapshot.userId": userId }, null, skip, limit)
+    .then((orders) => res.status(200).json({ orders, totalCount }))
     .catch((err) => res.status(500).json({ message: CANNOT_GET_ORDERS }));
 };
 

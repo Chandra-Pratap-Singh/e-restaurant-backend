@@ -83,14 +83,20 @@ exports.deleteProduct = (req, res, next) => {
 
 exports.getCompletedOrders = (req, res, next) => {
   const filters = { status: ORDER_STATES.DELIVERED };
-  getOrderListFromDb(filters)
+  const pageNumber = req.query ? req.query.pageNumber : null;
+  const limit = req.query ? req.query.limit : null;
+  const skip = !!pageNumber && !!limit ? (pageNumber - 1) * limit : null;
+  getOrderListFromDb(filters, null, skip, limit)
     .then((orders) => res.status(200).json(orders))
     .catch((err) => res.status(500).json(CANNOT_GET_ORDERS));
 };
 
 exports.getRejectedOrders = (req, res, next) => {
   const filters = { status: ORDER_STATES.REJECTED };
-  getOrderListFromDb(filters)
+  const pageNumber = req.query ? req.query.pageNumber : null;
+  const limit = req.query ? req.query.limit : null;
+  const skip = !!pageNumber && !!limit ? (pageNumber - 1) * limit : null;
+  getOrderListFromDb(filters, null, skip, limit)
     .then((orders) => res.status(200).json(orders))
     .catch((err) => res.status(500).json(CANNOT_GET_ORDERS));
 };
