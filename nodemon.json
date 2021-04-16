@@ -2,7 +2,7 @@
   "env": {
     "DB_CONNECTION_STRING": "mongodb+srv://chandra:3LriY1E3o0IFjoUP@e-restaurant.cn2vy.mongodb.net/shop?retryWrites=true&w=majority",
     "JWT_SECRATE": "secrate",
-    "SENDGRID_API_KEY": "SG.test.test_api",
+    "mailPassword": "test-wrong-password",
     "FRONT_END_BASE_LINK": "http://localhost:4200"
   }
 }

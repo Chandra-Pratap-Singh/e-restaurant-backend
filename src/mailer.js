@@ -1,14 +1,22 @@
-const sgMail = require("@sendgrid/mail").setApiKey(
-  process.env.SENDGRID_API_KEY
-);
+const transporter = require("nodemailer").createTransport({
+  service: "gmail",
+  auth: {
+    user: "erestaurant321@gmail.com",
+    pass: process.env.mailPassword,
+  },
+});
 
 exports.sendMail = (to, subject, message) => {
-  const msg = {
-    to,
+  var mailOptions = {
     from: "erestaurant321@gmail.com",
+    to,
     subject,
-    // text: message,
     html: `<p>${message}</p>`,
   };
-  return sgMail.send(msg);
+
+  transporter.sendMail(mailOptions, function (error) {
+    if (error) {
+      console.log(error);
+    }
+  });
 };
