@@ -12,19 +12,24 @@ const {
   updateProductInDb,
   getProductFromDb,
   getUniqueProductCategoryListFromDb,
+  countProductsInDb,
 } = require("../services/products");
 const { getCategoryFromDb } = require("../services/categories");
 const { generateRandomUniqueId } = require("../util");
 
 exports.getAllProductList = async (req, res, next) => {
   const category = req.query ? req.query.category : null;
+  const pageNumber = req.query ? +req.query.pageNumber : null;
+  const limit = req.query ? +req.query.pageLimit : null;
+  const skip = !!pageNumber && !!limit ? (pageNumber - 1) * limit : null;
   const filter = { available: true };
   if (!!category) {
     const { _id } = await getCategoryFromDb({ category });
     filter.category = _id;
   }
-  getProductListFromDb(filter, SHOP_PRODUCT_PROPERTY.join(" "))
-    .then((productList) => res.status(200).json(productList))
+  const totalCount = await countProductsInDb(filter);
+  getProductListFromDb(filter, SHOP_PRODUCT_PROPERTY.join(" "), skip, limit)
+    .then((productList) => res.status(200).json({ productList, totalCount }))
     .catch((err) =>
       res.status(500).json({ message: PRODUCTS_FETCHING_FAILED })
     );

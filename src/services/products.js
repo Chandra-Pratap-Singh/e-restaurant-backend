@@ -6,8 +6,20 @@ exports.addProductToDb = (newProduct) => {
   return product.save();
 };
 
-exports.getProductListFromDb = (filters = {}, fields) => {
-  return Product.find({ ...filters }, fields).populate("category");
+exports.getProductListFromDb = (
+  filters = {},
+  fields,
+  skip = 0,
+  limit = null
+) => {
+  return Product.find({ ...filters }, fields)
+    .skip(skip)
+    .limit(limit)
+    .populate("category");
+};
+
+exports.countProductsInDb = (filters = {}) => {
+  return Product.find(filters).count();
 };
 
 exports.getProductFromDb = (filter = {}, fields) => {

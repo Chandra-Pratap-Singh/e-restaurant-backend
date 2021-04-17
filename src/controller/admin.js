@@ -20,6 +20,7 @@ const {
   getOrderFromDb,
   getOrderListFromDb,
   updateOrderInDb,
+  countOrdersInDb,
 } = require("../services/orders");
 const {
   getProductListFromDb,
@@ -27,6 +28,7 @@ const {
   updateProductInDb,
   addProductToDb,
   deleteProductFromDb,
+  countProductsInDb,
 } = require("../services/products");
 
 const { generateRandomUniqueId } = require("../util");
@@ -44,9 +46,13 @@ exports.addCategory = (req, res, next) => {
     .catch((err) => res.status(500).json(CATEGORY_ADDITION_FAILED));
 };
 
-exports.getAllProductList = (req, res, next) => {
-  getProductListFromDb(null, ADMIN_PRODUCT_PROPERTY)
-    .then((products) => res.status(200).json(products))
+exports.getAllProductList = async (req, res, next) => {
+  const pageNumber = req.query ? +req.query.pageNumber : null;
+  const limit = req.query ? +req.query.pageLimit : null;
+  const skip = !!pageNumber && !!limit ? (pageNumber - 1) * limit : null;
+  const totalCount = await countProductsInDb();
+  getProductListFromDb(null, ADMIN_PRODUCT_PROPERTY, skip, limit)
+    .then((products) => res.status(200).json({ products, totalCount }))
     .catch((err) => res.status(500).json(PRODUCTS_FETCHING_FAILED));
 };
 
@@ -81,23 +87,25 @@ exports.deleteProduct = (req, res, next) => {
     .catch((err) => res.status(500).json(PRODUCT_DELETION_FAILED));
 };
 
-exports.getCompletedOrders = (req, res, next) => {
+exports.getCompletedOrders = async (req, res, next) => {
   const filters = { status: ORDER_STATES.DELIVERED };
-  const pageNumber = req.query ? req.query.pageNumber : null;
-  const limit = req.query ? req.query.limit : null;
+  const pageNumber = req.query ? +req.query.pageNumber : null;
+  const limit = req.query ? +req.query.pageLimit : null;
   const skip = !!pageNumber && !!limit ? (pageNumber - 1) * limit : null;
+  const totalCount = await countOrdersInDb(filters);
   getOrderListFromDb(filters, null, skip, limit)
-    .then((orders) => res.status(200).json(orders))
+    .then((orders) => res.status(200).json({ orders, totalCount }))
     .catch((err) => res.status(500).json(CANNOT_GET_ORDERS));
 };
 
-exports.getRejectedOrders = (req, res, next) => {
+exports.getRejectedOrders = async (req, res, next) => {
   const filters = { status: ORDER_STATES.REJECTED };
-  const pageNumber = req.query ? req.query.pageNumber : null;
-  const limit = req.query ? req.query.limit : null;
+  const pageNumber = req.query ? +req.query.pageNumber : null;
+  const limit = req.query ? +req.query.pageLimit : null;
   const skip = !!pageNumber && !!limit ? (pageNumber - 1) * limit : null;
+  const totalCount = await countOrdersInDb(filters);
   getOrderListFromDb(filters, null, skip, limit)
-    .then((orders) => res.status(200).json(orders))
+    .then((orders) => res.status(200).json({ orders, totalCount }))
     .catch((err) => res.status(500).json(CANNOT_GET_ORDERS));
 };
 
